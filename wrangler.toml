@@ -1,0 +1,10 @@
+name = "turing-aptitude-api"
+main = "worker/index.js"
+compatibility_date = "2026-11-16"
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "QUIZ_STORE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

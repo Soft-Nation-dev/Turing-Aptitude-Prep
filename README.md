@@ -22,7 +22,7 @@ The Worker uses Cloudflare's Workers AI binding. It does not require an OpenAI o
 
 ## Connect GitHub Pages to the Worker
 
-In `index.html`, replace `https://YOUR-WORKER.workers.dev` in the `API_BASE` constant with the deployed Worker URL (no trailing slash), then commit the change.
+The frontend `API_BASE` is configured to `https://turing-aptitude-api.ifeanyieee8105.workers.dev`. If you deploy a different Worker, update that constant and commit the change.
 
 ## GitHub Pages
 
@@ -31,7 +31,9 @@ In repository Settings → Pages, select **Deploy from a branch**, branch `main`
 ## Test behaviour
 
 - 18 questions, 60 minutes, one correct option per question.
-- 6 questions per category: analytical reasoning, English proficiency, attention to detail.
+- Full assessment mode: 6 questions each from analytical reasoning, English proficiency, and attention to detail.
+- Focused practice modes: 18 questions from analytical reasoning only, English proficiency only, or attention to detail only.
+- Difficulty choices: mixed, easy, intermediate, or advanced.
 - Must answer before moving on; no going back, matching the assessment instructions supplied by the candidate.
 - Auto-submit at time expiry.
 - Correct answers and explanations stay in KV until grading; they are not returned by the generate endpoint.

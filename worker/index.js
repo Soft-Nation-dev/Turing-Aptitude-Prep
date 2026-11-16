@@ -19,8 +19,10 @@ async function generate(request,env,cors) {
  if (!env.AI || !env.QUIZ_STORE) return json({error:"Cloudflare AI and KV are not configured. Follow the deployment instructions."},503,cors);
  const body=await request.json();
  const difficulty=["easy","intermediate","advanced","mixed"].includes(body.difficulty)?body.difficulty:"mixed";
+ const category=CATEGORIES.includes(body.category)?body.category:"all";
+ const categoryPlan=category==="all"?"Create exactly 6 analytical, 6 english, and 6 detail questions.":"Create exactly 18 questions, and every question must have category \""+category+"\". Do not include questions from the other categories.";
  const prompt = `You are creating a rigorous practice assessment to prepare a candidate for the Turing General Aptitude Test. This is original practice material, NOT actual, leaked, or guaranteed Turing questions. The candidate's assessment instructions specify 18 multiple-choice questions, 60 minutes, one correct answer per question, and assessment objectives of analytical reasoning, English proficiency, and attention to detail.
-Create exactly 18 questions: exactly 6 analytical, 6 english, and 6 detail. Difficulty: ${difficulty}. If mixed, include a meaningful spread of easy, intermediate, and advanced questions.
+Create exactly 18 questions. ${categoryPlan} Difficulty: ${difficulty}. If mixed, include a meaningful spread of easy, intermediate, and advanced questions.
 ANALYTICAL: numerical reasoning, arithmetic word problems, ratios, percentages, number patterns, logical deductions, sequences, and interpreting simple data. Test reasoning, not obscure trivia.
 ENGLISH: grammar, punctuation, vocabulary in context, sentence correction, concise reading comprehension, inference, and word usage. Use natural professional English.
 DETAIL: careful comparison of similar strings, names, dates, numbers, instructions, short records, spotting inconsistencies, and exact matching. Include all data needed in each question; avoid relying on visual formatting.
@@ -30,10 +32,11 @@ Return ONLY JSON: {"questions":[{"id":"q1","category":"analytical|english|detail
  const raw=typeof result==="string"?result:(result.response||result.choices?.[0]?.message?.content||"");
  let parsed;try{parsed=JSON.parse(raw)}catch{return json({error:"The AI did not return valid question data. Please try again."},502,cors)}
  const qs=parsed.questions;
- if(!Array.isArray(qs)||qs.length!==COUNT||!qs.every(validQuestion)||CATEGORIES.some(c=>qs.filter(q=>q.category===c).length!==6)) return json({error:"The generated questions did not pass quality checks. Please try again."},502,cors);
+ const expectedPerCategory=c=>category==="all"?6:(c===category?18:0);
+ if(!Array.isArray(qs)||qs.length!==COUNT||!qs.every(validQuestion)||CATEGORIES.some(c=>qs.filter(q=>q.category===c).length!==expectedPerCategory(c))) return json({error:"The generated questions did not pass quality checks. Please try again."},502,cors);
  const testId=crypto.randomUUID();
  await env.QUIZ_STORE.put(testId,JSON.stringify(qs),{expirationTtl:7200});
- return json({testId,questions:qs.map(({id,category,difficulty,question,options})=>({id,category,difficulty,question,options}))},200,cors);
+ return json({testId,category,questions:qs.map(({id,category,difficulty,question,options})=>({id,category,difficulty,question,options}))},200,cors);
 }
 function validQuestion(q,i){return q&&q.id==="q"+(i+1)&&CATEGORIES.includes(q.category)&&["easy","intermediate","advanced"].includes(q.difficulty)&&typeof q.question==="string"&&q.question.length>12&&Array.isArray(q.options)&&q.options.length===4&&q.options.every((o,j)=>o&&o.id===["A","B","C","D"][j]&&typeof o.text==="string"&&o.text.length>0)&&["A","B","C","D"].includes(q.correctOptionId)&&typeof q.explanation==="string"&&q.explanation.length>8}
 async function grade(request,env,cors){

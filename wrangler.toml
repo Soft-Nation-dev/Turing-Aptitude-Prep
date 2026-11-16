@@ -7,4 +7,7 @@ binding = "AI"
 
 [[kv_namespaces]]
 binding = "QUIZ_STORE"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "d9b3146419b44756b249f1bd36bed779"
+
+[vars]
+ALLOWED_ORIGIN = "https://soft-nation-dev.github.io"
